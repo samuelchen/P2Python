@@ -1,6 +1,6 @@
 #P2Python
 ==========
-P2Python is a P2P framework for python. 
+P2Python is a P2P framework for python.
 
 The following features are supported:
 
@@ -13,7 +13,4 @@ The following features are supported:
 * None-blocking request
 
 
-
-Project home: <http://github.com/samuelchen/P2Python>
-
-by [Samuel Chen](samuel.net@gmail.com)
+[Samuel Chen](samuel.net@gmail.com)
