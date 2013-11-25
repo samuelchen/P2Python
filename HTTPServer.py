@@ -132,14 +132,15 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
             f = open(path, 'rb')
-        except IOError:
+        except IOError, e:
             self.send_error(404, "File not found")
+            self.log.exception(e)
             return None
         self.send_response(200)
         self.send_header("Content-type", ctype)
         fs = os.fstat(f.fileno())
         if self.server._chunked:
-            self.send_head("Transfer-Encoding", "chunked")
+            self.send_header("Transfer-Encoding", "chunked")
         else:
             self.send_header("Content-Length", str(fs[6]))
         self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
@@ -151,7 +152,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
         if 'resource' in self.server.callbacks:
             fn = self.server.callbacks['resource']
             ret = fn(self.headers)
-        ret = SimpleHTTPRequestHandler.translate_path(self, ret)
+        #ret = SimpleHTTPRequestHandler.translate_path(self, ret)
         return ret
 
 #     def guess_type(self, path):
@@ -179,17 +180,18 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
                     l = length - copied
                     buf = buf[:l]
 
-                fdst.write('%x\r\n' % l)
+                fdst.write(hex(l)[2:])
+                fdst.write('\r\n')
                 fdst.write(buf)
                 fdst.write('\r\n')
-            fdst.write('\0\r\n\r\n')
-            #self.send_head('Content')
+            fdst.write('0\r\n\r\n')
         else:
             while 1:
                 buf = fsrc.read(chunk_size)
                 if not buf:
                     break
                 fdst.write(buf)
+                
 
 if __name__ == '__main__':
     svr = HTTPServer(('0.0.0.0', 8088), HTTPRequestHandler)

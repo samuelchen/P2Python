@@ -20,6 +20,7 @@ from tornado import httpclient, ioloop
 
 flag = False
 workpath = os.getcwd() + '/testdata'
+print 'workpath : ', workpath
 
 class DownloadTest(unittest.TestCase):
 
@@ -52,13 +53,13 @@ class DownloadTest(unittest.TestCase):
         def on_resource(**kwargs):
             print 'on_resource'
             global workpath
-            path = '%s/%s' % (workpath, 'Evernote_5.0.3.1614.exe')
+            path = '%s/%s' % (workpath, 'downloadsource.log')
             print path
             return path
 
         def on_stream(**kwargs):
             global workpath
-            path = '%s/%s' % (workpath, 'Evernote_5.0.3.1614.exe')
+            path = '%s/%s' % (workpath, 'downloadsource.log')
             f = open(path, 'rb')
             return f
 
@@ -71,16 +72,19 @@ class DownloadTest(unittest.TestCase):
             return
 
         def asyncDownloadHandler(response):
+            print 'on_download(asyncDownloadHandler)'
             print response
             assert(not response.error)
 
             data = response.body
-            l = len(data)
+            l = len(data or '')
+            print '-' * 60
             print 'downloaded %d' % l
-            print data
+            #print data
+            print '-' * 60
 
             global workpath
-            fname = workpath + '/asyncDownloadedFile'
+            fname = workpath + '/asyncDownloadedFile.log'
             f = open(fname, 'ab')
             f.write(data)
             f.close()
@@ -97,6 +101,18 @@ class DownloadTest(unittest.TestCase):
         time.sleep(10)
 
         ioloop.IOLoop.instance().stop()
+        f1 = open('downloadsource.log', 'rb')
+        s1 = f1.read(-1)
+        s1 = Util.md5(s1)
+        f1.close()
+        print 's1 = %s' % s1
+
+        f2 = open('asyncDownloadedFile.log', 'rb')
+        s2 = f2.read(-1)
+        s2 = Util.md5(s2)
+        f2.close()
+        print 's2 = %s' % s2
+        flag = s1 == s2
         print 'testQuery done', flag
         assert(flag)
 

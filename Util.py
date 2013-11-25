@@ -44,15 +44,15 @@ def getLogger(name='P2PSync'):
 log = getLogger('Util')
 
 
-import socket, fcntl, struct
-socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-def getIPbyInterface(ifname):
-    return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
-    )[20:24])
+# import socket, fcntl, struct
+# socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# 
+# def getIPbyInterface(ifname):
+#     return socket.inet_ntoa(fcntl.ioctl(
+#         s.fileno(),
+#         0x8915,  # SIOCGIFADDR
+#         struct.pack('256s', ifname[:15])
+#     )[20:24])
 
 def getLocalIPAddress(ifname=None):
     import socket

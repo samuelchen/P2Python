@@ -2,3 +2,6 @@
 *.exe
 *.log
 testdata\*
+.settings
+.project
+.pydevproject

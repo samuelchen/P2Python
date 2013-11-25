@@ -19,8 +19,7 @@ class SendMessageTest(unittest.TestCase):
 
     def setUp(self):
 
-        ip = Util.getLocalIPAddress()
-        self.ip = ip
+        self.ip = ip = '127.0.0.1'
 
         self.svr1 = ConnectionManager(peer_port = 22222, data_port = 22223)
         self.svr1.addPeer(ip, 33333)
