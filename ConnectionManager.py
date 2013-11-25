@@ -19,10 +19,14 @@ class ConnectionManager(object):
 
     def __init__(self, peer_port = PeerServer.DEFAULT_PORT, \
                  data_port = DataServer.DEFAULT_PORT, \
-                 protocal_prefix = None, callbacks = {}):
+                 data_transfer_protocal = 'tcp',
+                 p2p_prefix = None, callbacks = {}):
         '''
         Constructor
-        *protocal_prefix*: the protocal prefix to identify the data package.
+        *peer_port*: int. Peer server service port.
+        *data_port*: int. Data server service port.
+        *data_transfer_protocal*: string. data transfer protocal. supports 'tcp', 'http', 'udp'
+        *p2p_prefix*: str. the protocal prefix to identify the peer data package.
         *callbacks*: the external callback functions to handle events.
                 you need to parse the data depends your business.
 
@@ -33,18 +37,18 @@ class ConnectionManager(object):
 
         '''
         self.log = Util.getLogger('ConnManager(%d)' % peer_port)
-        if protocal_prefix:
-            P.setPrefix(protocal_prefix)
+        if p2p_prefix:
+            P.setPrefix(p2p_prefix)
 
         self.peer_port = peer_port
         self.data_port = data_port
         self.peerServer = PeerServer(('0.0.0.0', peer_port), PeerServerHandler)
         self.ip = self.peerServer.server_address[0]
-        self.peerThread = None
 
         # initialize internal and external callbacks
         self.callbacks = callbacks  #external callbacks
-
+        
+        # init peer callbacks
         peerCallbacks = {
             'register'      : self._on_register,
             'query'         : self._on_query,
@@ -52,29 +56,44 @@ class ConnectionManager(object):
             'action'        : self._on_action,
         }
         self.peerServer.init(peerCallbacks) #internal callbacks
-        self.log.info("Peer Sever initialized on %s:%d:%d" % (self.ip, self.peer_port, self.data_port))
+        self.log.info("P2P Sever initialized on %s:%d:%d" % (self.ip, self.peer_port, self.data_port))
+        
+        
+        dataCallbacks = {
+            'connect'       : self._on_connected,
+            'transfer'      : self._on_transfer,
+            'disconnect'    : self._on_disconnected,
+            'resource'      : self._on_resource,
+            'signature'     : self._on_signature,
+        
+        }
+        self.dataServer = DataServer(port=data_port, protocal=data_transfer_protocal, callbacks=dataCallbacks)
 
     def start(self):
         '''
         Start a P2P server
         '''
-        self.peerThread = threading.Thread(target=self.peerServer.serve_forever)
-        self.peerThread.daemon = True
-        self.peerThread.start()
-        self.peerThread.name = 'PeerServer(%d)' % self.peerThread.ident
-#         print '--------------',self.peerThread.ident
-#         self.peerServer.log.name = self.peerThread.name
-        self.log.info(":: PeerServer started")
+#         self.peerThread = threading.Thread(target=self.peerServer.serve_forever)
+#         self.peerThread.daemon = True
+#         self.peerThread.start()
+#         self.peerThread.name = 'PeerServer(%d)' % self.peerThread.ident
+# #         print '--------------',self.peerThread.ident
+# #         self.peerServer.log.name = self.peerThread.name
+#         self.log.info(":: PeerServer started")
+        self.peerServer.start()
+        self.dataServer.start()
 
     def stop(self):
         '''
         Stop serving
         '''
-        if self.peerThread and self.peerThread.isAlive():
-            self.peerServer.shutdown()
+#         if self.peerThread and self.peerThread.isAlive():
+#             self.peerServer.shutdown()
+        self.peerServer.stop()
+        self.dataServer.stop()
 
     def isAlive(self):
-        return self.peerThread.isAlive()
+        return self.peerServer.isAlive()
 
     def broadcast(self, loop=False):
         '''
@@ -98,7 +117,7 @@ class ConnectionManager(object):
         '''
         self.peerServer.sendQuery(query, ip)
 
-    def addPeer(self, ip, port):
+    def addPeer(self, ip, port=PeerServer.DEFAULT_PORT):
         '''
         Add a specified peer to registered peers.
         '''
@@ -172,6 +191,16 @@ class ConnectionManager(object):
         Callback when client disconnected
         '''
         pass
+    
+    def _on_resource(self):
+        pass
+    
+    def _on_stream(self):
+        pass
+    
+    def _on_signature(self):
+        pass
+    
 
 
 

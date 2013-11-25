@@ -39,17 +39,6 @@ class DownloadTest(unittest.TestCase):
 
     def testDownload(self):
 
-        def on_download(**kwargs):
-            global flag
-            print 'on_download'
-            query = kwargs['data']
-            if query == 'rid=12345&hash=KDHUEID':
-                print '-' * 60
-                print 'I received a query from %(ip)s >> %(data)s' % kwargs
-                print '-' * 60
-                flag = True
-            return flag
-
         def on_resource(**kwargs):
             print 'on_resource'
             global workpath
@@ -68,9 +57,6 @@ class DownloadTest(unittest.TestCase):
             return True
 
 
-        def on_query(**kwargs):
-            return
-
         def asyncDownloadHandler(response):
             print 'on_download(asyncDownloadHandler)'
             print response
@@ -88,8 +74,9 @@ class DownloadTest(unittest.TestCase):
             f = open(fname, 'ab')
             f.write(data)
             f.close()
+            #ioloop.IOLoop.instance().stop()
 
-        global flag
+        global flag, workpath
         flag = False
         self.svr1.callbacks['resource'] = on_resource
         self.svr1.callbacks['signature'] = on_signature
@@ -98,20 +85,21 @@ class DownloadTest(unittest.TestCase):
         cli.fetch("http://%s:%d/obj1" % (self.ip, self.svr1.port), asyncDownloadHandler)
         ioloop.IOLoop.instance().start()
 
-        time.sleep(10)
+        time.sleep(1)
 
         ioloop.IOLoop.instance().stop()
-        f1 = open('downloadsource.log', 'rb')
+        f1 = open(workpath + '/downloadsource.log', 'rb')
         s1 = f1.read(-1)
         s1 = Util.md5(s1)
         f1.close()
         print 's1 = %s' % s1
 
-        f2 = open('asyncDownloadedFile.log', 'rb')
+        f2 = open(workpath + '/asyncDownloadedFile.log', 'rb')
         s2 = f2.read(-1)
         s2 = Util.md5(s2)
         f2.close()
         print 's2 = %s' % s2
+        
         flag = s1 == s2
         print 'testQuery done', flag
         assert(flag)

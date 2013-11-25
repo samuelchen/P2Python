@@ -191,7 +191,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
                 if not buf:
                     break
                 fdst.write(buf)
-                
+
 
 if __name__ == '__main__':
     svr = HTTPServer(('0.0.0.0', 8088), HTTPRequestHandler)

@@ -32,7 +32,8 @@ class DataServer(object):
         '''
         Constructor.
         *port*: int. service port for DataPeer
-        *protocal*: string. supports 'tcp', 'http', 'udp'
+        *protocal*: string. data transfer protocal. supports 'tcp', 'http', 'udp'
+        *callbacks*: map. callback functions to process the data your self.
         '''
         self.log = Util.getLogger('DataServer(%d)' % port)
         if not protocal in DataServer.SUPPORT_PROTOCALS:
@@ -45,10 +46,15 @@ class DataServer(object):
         self.callbacks = callbacks
         self.log.info('Data server (%s) created.' % protocal.upper())
 
-    def start(self):
+    def start(self, protocal=None):
         '''
         start data server
+        *protocal* : string. data transfer protocal. supports 'tcp', 'http', 'udp'
         '''
+        if not protocal: 
+            if not self.protocal: self.protocal = 'tcp'
+        else:
+            self.protocal = protocal
         assert(self.protocal in DataServer.SUPPORT_PROTOCALS)
 
         if self.protocal == 'tcp':
@@ -62,7 +68,6 @@ class DataServer(object):
         if self.instance:
             self.instance.shutdown()
 
-    @property
     def isAlive(self):
         return self.thread.isAlive()
 

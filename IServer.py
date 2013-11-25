@@ -8,10 +8,18 @@ Created on 2013-11-12
 
 from exceptions import *
 
-def IServer(kls):
+class IServer(object):
     '''Decorator to assign general functions to class. 
     perform as a interface.
     '''
+    
+    def __init__(self, kls):
+        self.kls = kls
+    
+    def __call__(self, *args):
+        setattr(self.kls, 'callbacks', IServer.callbacks)
+        setattr(self.kls, '_invoke', IServer._invoke)
+        return self.kls.__init__(self, args)
     
     @property
     def callbacks(self):
@@ -23,6 +31,20 @@ def IServer(kls):
             self._callbacks = value
         else:
             raise TypeError('Invalid callbacks. You must set a map for all callbacks')
+    
+    def _invoke(self, name, **kwargs):
+        ''' invoke callbacks.
+        *name*: callback name to be invoked.
+        *kwargs*: mapping args to be passed to callback.
+        '''
+        ret = None
+        if name in self.callbacks:
+            fn = self.callbacks[name]
+            try:
+                ret = fn(kwargs)
+            except Exception, e:
+                self.log.exception(e)
+        return ret
     
     @property
     def ip(self):
@@ -53,6 +75,5 @@ def IServer(kls):
 #     kls.port = port
 #     kls.start = start
 #     kls.stop = stop
-    setattr(kls, 'stop', stop)
     
     

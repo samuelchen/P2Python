@@ -21,6 +21,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
     DEFAULT_PORT = 37122
     QUERY_EXPIRES = 300 # seconds
     RESULT_EXPIRES = 300 # seconds
+    thread = None
 
     def init(self, callbacks={}):
         ''' Initialize the peer server.
@@ -46,6 +47,23 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         self.callbacks = callbacks
         self._cast_loop = False
         self.log.debug('Initialized on %s:%d.' % self.server_address)
+        
+    def start(self):
+        self.thread = threading.Thread(target=self.serve_forever)
+        self.thread.daemon = True
+        self.thread.start()
+        self.thread.name = 'PeerServer(%d)' % self.thread.ident
+        self.log.info(':: PeerServer started')
+        
+    def stop(self):
+        if self.thread and self.thread.isAlive():
+            self.shutdown()
+            self.log.info(':: PeerServer is shutting down.')
+        else:
+            self.log.info(':: PeerServer was shutdown.')
+    
+    def isAlive(self):
+        return self.thread.isAlive()
 
     def broadcast(self, loop = False):
         ''' Broadcast registering message to the network.
