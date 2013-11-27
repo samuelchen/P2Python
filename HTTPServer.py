@@ -41,7 +41,7 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
         self.timeout =99999
 
 class HTTPRequestHandler(SimpleHTTPRequestHandler):
-    server_version = "P2PSyncHTTPServer/" + __version__
+    server_version = "P2PythonHTTPServer/" + __version__
     log = None
 
     def do_GET(self):

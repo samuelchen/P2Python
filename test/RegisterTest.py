@@ -54,12 +54,12 @@ class RegisterTest(unittest.TestCase):
 
         self.svr2.callbacks['register'] = on_reg
 
-        self.svr1.broadcast(loop=True)
-        self.svr2.broadcast(loop=True)
+        self.svr1.sendRegister(loop=True)
+        self.svr2.sendRegister(loop=True)
         time.sleep(3)
 
-        self.svr1.broadcast(loop=False)
-        self.svr2.broadcast(loop=False)
+        self.svr1.sendRegister(loop=False)
+        self.svr2.sendRegister(loop=False)
 
         self.svr1.stop()
         self.svr2.stop()

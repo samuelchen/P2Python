@@ -25,21 +25,21 @@ def setPrefix(prefix):
 
 
 
-def reg(port):
+def reg(port, data=''):
     ''' Register format
         *port*: the serving port to register.
         For example, P2P||REG||37122||Greeting
     '''
-    msg = SPLITTER.join((PREFIX, CMD_REG, str(port)))
+    msg = SPLITTER.join((PREFIX, CMD_REG, str(port), str(data)))
     return msg
 
 
-def reg_reply(port):
+def reg_reply(port, data=''):
     ''' Register reply format
         *port*: the serving port to register.
         For example, P2P||REGACK||37122||My Content
     '''
-    msg = SPLITTER.join((PREFIX, CMD_REG_REPLY, str(port)))
+    msg = SPLITTER.join((PREFIX, CMD_REG_REPLY, str(port), str(data)))
     return msg
 
 

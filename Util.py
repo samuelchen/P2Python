@@ -14,17 +14,17 @@ class LogLevelFilter(object):
     def filter(self, logRecord):
         return logRecord.levelno <= self.__level
 
-def getLogger(name='P2PSync'):
+def getLogger(name='P2Python'):
 
     logger = logging.getLogger(name)  
-    logger.setLevel(logging.DEBUG)  
+    logger.setLevel(logging.DEBUG)
 
     # file handler.
     fh = logging.FileHandler("p2psync.log")  
     fh.setLevel(logging.INFO)
     # console handler
     ch = logging.StreamHandler(stream=sys.stdout)  
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(logging.INFO)
     ch.addFilter(LogLevelFilter(logging.WARN))
     # stderr handler
     eh = logging.StreamHandler(stream=sys.stderr)
@@ -38,7 +38,8 @@ def getLogger(name='P2PSync'):
     logger.addHandler(ch)  
     logger.addHandler(fh)
     logger.addHandler(eh) 
-
+    
+    logger.propagate = False
     return logger
 
 log = getLogger('Util')
@@ -54,17 +55,23 @@ log = getLogger('Util')
 #         struct.pack('256s', ifname[:15])
 #     )[20:24])
 
+# def getLocalIPAddress(ifname=None):
+#     import socket
+#     ip = '0.0.0.0'
+#     if type == 'internal':
+#         hostname = socket.gethostname()
+#         ip = socket.gethostbyname(hostname)
+#     elif type == 'external':
+#         hostname = socket.gethostname()
+#         ip = socket.gethostbyname(hostname)
+#         
+#     log.debug("local ip address: %s" % ip)
+#     return ip
+
 def getLocalIPAddress(ifname=None):
     import socket
-    ip = '0.0.0.0'
-    if type == 'internal':
-        hostname = socket.gethostname()
-        ip = socket.gethostbyname(hostname)
-    elif type == 'external':
-        hostname = socket.gethostname()
-        ip = socket.gethostbyname(hostname)
-        
-    log.debug("local ip address: %s" % ip)
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
     return ip
 
 def md5(data):

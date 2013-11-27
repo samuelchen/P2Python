@@ -95,27 +95,41 @@ class ConnectionManager(object):
     def isAlive(self):
         return self.peerServer.isAlive()
 
-    def broadcast(self, loop=False):
+    def _broadcast(self, message=None, port=None, loop=False):
         '''
         Broadcast to the network
         '''
-        self.peerServer.broadcast(loop=loop)
+        self.peerServer.broadcast(message=message, port=port, loop=loop)
+        
+    def sendRegister(self, data=None, ip=None, port=None, loop=False):
+        ''' Send a register request to a peer server or network
+        *ip*: the ip address of the registered peer. if not specified, *broadcast* to network
+        *port*: the peer port. if not specified, will try sending to the default port.
+        *loop*: specify whether the register message will be sent endlessly. Default interval is 5 seconds.
+        '''
+        self.peerServer.sendRegister(data=data, ip=ip, port=port, loop=loop)
 
-    def sendMessage(self, message, ip, port=PeerServer.DEFAULT_PORT):
+    def sendMessage(self, message, ip=None, port=None):
+        ''' Send a message to a peer.
+        *message*: the message to be sent. DO NOT include the protocal splitter (default is "||")
+        *ip*: the peer ip. If the ip is not registered, will *broadcast* to the network.
+        *port*: the peer port. if not specified, will try sending to the default port.
         '''
-        Send a message to a peer.
-        *ip*: target peer to send message
-        *port*: the peer serving port
-        '''
-        self.peerServer.sendMessage(message, ip, port)
+        self.peerServer.sendMessage(message=message, ip=ip, port=port)
 
-    def sendQuery(self, query, ip):
+    def sendQuery(self, query, ip=None):
+        ''' Send a query request to a peer server or network. If sender is not registered on remote peer, no response
+        *query*: the query string. You need to combine/parse it yourself.
+        *ip*: the ip address of the registered peer. if not specified, *broadcast* to network
         '''
-        Send a query to a peer.
-        *query*: query string
-        *ip*: target peer to send message
+        self.peerServer.sendQuery(query=query, ip=ip)
+        
+    def getQueryResult(self, key):
+        ''' Retrieve a query result by given key
+        *key*: the key (generally it's the query string) for results.
+        *return*: the result address list [(ip, port), (ip, port) ...]
         '''
-        self.peerServer.sendQuery(query, ip)
+        return self.peerServer.getQueryResult(key=key)
 
     def addPeer(self, ip, port=PeerServer.DEFAULT_PORT):
         '''
