@@ -78,3 +78,13 @@ def md5(data):
     h = hashlib.md5()
     h.update(data.encode('utf8'))
     return h.hexdigest()
+
+def md5_file(name):
+    h = hashlib.md5()
+    f = open(name, 'rb')
+    while 1:
+        data = h.update(f.read(8096))
+        if not data: break
+        h.update(data)
+    f.close()
+    return h.hexdigest()

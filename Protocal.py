@@ -62,7 +62,7 @@ def qry(query):
     return msg
 
 
-def qry_reply(answer, data):
+def qry_reply(answer, data, data_port):
     '''Query reply format
     *data*, the query string to be sent.(should be same
     For example, P2P||QRYACK||yes||resource_id=34||name='sam'||hash='MD5VALUE'
@@ -76,7 +76,7 @@ def qry_reply(answer, data):
     else:
         msg = str(data)
         
-    msg = SPLITTER.join((PREFIX, CMD_QRY_REPLY, answer, msg))
+    msg = SPLITTER.join((PREFIX, CMD_QRY_REPLY, str(data_port), answer, msg))
     return msg
 
     

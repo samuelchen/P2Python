@@ -39,26 +39,30 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
         self._chunked = chunked
         self.log.debug('Initialized on %s:%d.' % (self.server_address))
         self.timeout =99999
-
+    
 class HTTPRequestHandler(SimpleHTTPRequestHandler):
     server_version = "P2PythonHTTPServer/" + __version__
     log = None
-
+    
     def do_GET(self):
         """Serve a GET request."""
 
         if not self.log: self.log = self.server.log
-
         self.log.info('Request GET from %s:%d' % self.client_address)
+        self.response_resource()
 
-        if self.server.connections > 1:
+    def do_POST(self):
+        if not self.log: self.log = self.server.log
+        self.log.info('Request POST from %s:%d' % self.client_address)
+        #self.log.debug(self.request)
+        self.response_resource()
+        
+    def response_resource(self):
+        if self.server.connections > 2:
             self.send_response(405, 'Server is busy')
             return
 
-        mutex.acquire(False)
-        self.server.connections += 1
-        mutex.release()
-        self.log.debug('Request serving. Total %d' % self.server.connections)
+        self._counter_lock()
 
         #simple signature authorization.
         if 'signature' in self.server.callbacks:
@@ -66,9 +70,11 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
             try:
                 signed = fn(**self.headers)
                 if not signed:
+                    self._counter_release()
                     self.send_response(401)
                     return
             except Exception, e:
+                self._counter_release()
                 self.log.exception('Error occurs  while invoking "signature" callback.')
                 self.send_response(502)
                 return
@@ -80,19 +86,30 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
             if 'range' in self.headers:
                 offset = self.headers['Range']
                 items = offset.split('=')
-                assert(items[0] == 'byte')
+                assert(items[0] == 'bytes')
                 items = items[1].split('-')
                 offset = int(items[0])
-                if len(items > 1) : length = int(items[1])
+                if len(items) > 1 and items[1] : length = int(items[1])
         except Exception, e:
             self.log.exception('HEADER Range error. %s' % e)
+            self.send_response(502)
+            return
 
         f = self.send_head()
         if f:
-            self.copyfile(f, self.wfile, offset, length)
+            self.copyfile(f, self.wfile, offset, length, 128*1024)
             f.close()
         #self.end_headers()
 
+        self._counter_release()
+        
+    def _counter_lock(self):
+        mutex.acquire(False)
+        self.server.connections += 1
+        mutex.release()
+        self.log.debug('Request serving. Total %d' % self.server.connections)
+    
+    def _counter_release(self):
         mutex.acquire(False)
         self.server.connections -= 1
         mutex.release()
@@ -109,7 +126,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
         None, in which case the caller has nothing further to do.
 
         """
-        path = self.translate_path(self.path)
+        path = self.translate_path(self.path) or '/'
         f = None
         if os.path.isdir(path):
             if not self.path.endswith('/'):
@@ -151,7 +168,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
         ret = path
         if 'resource' in self.server.callbacks:
             fn = self.server.callbacks['resource']
-            ret = fn(self.headers)
+            ret = fn(self.request, **self.headers)
         #ret = SimpleHTTPRequestHandler.translate_path(self, ret)
         return ret
 

@@ -35,6 +35,12 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
                     "message" - message callback. to populate the message when received.
                     "action" - action callback. to parse and perform the action.
 
+        *callback returns*:
+                *"query"* callback should return (resource, service_protocal, service_port).
+                    "resource" identify how to get the resource.
+                    "service_protocal" is the transfer protocal(http,tcp,udp) to serving the resource.
+                    "service_port" is the port to serving the resource.
+
         '''
 
         self.log = Util.getLogger('PeerServer(%d)' % self.server_address[1])
@@ -166,16 +172,55 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
             self._broadcast(message=qry, port=port, loop=False)
             self.log.info('Query broadcasted to network(port %d) - %s' % (port, qry))
 
-    def addQueryResult(self, key, ip):
+    def addQueryResult(self, key, ip, data_port):
         ''' Add a received query result to local map.
         *key*: the key for results (generally it's the query string)
         *ip*: the peer's ip where the result comes from
+        
+        Query results as below:
+        
+             query          ip                timestamp   data_port 
+        -----------------------------------------------------
+        {
+            'q1=xx&q2=yy' : { 
+                        '127.0.0.1'      : ( 123456789.012, 37123 ),
+                        '192.168.1.3'    : ( 321455643.543, 45678 ),
+                        ...
+            },
+            
+            'a1=mm&a2=dd' : {
+                        '192.168.1.3'    : ( 642323232.323, 45678 ),
+                        '54.34.2.23'     : ( 142235423.142, 87654 ),
+                        ...
+            }
+            ...
+        }
         '''
         if not key in self.mapQueryResults:
             self.mapQueryResults[key] = {}
-        port = self.mapPeers[ip]
-        r = (time.time(), port)
+        r = (time.time(), data_port)
         self.mapQueryResults[key][ip] = r # there might be many results
+        
+    def removeQueryResult(self, query, ip=None):
+        ''' remove query result(s) by given key/ip 
+        '''
+        key = query
+        if key in self.mapQueryResults:
+            if not ip: 
+                del self.mapQueryResults[key]
+            elif ip in self.mapQueryResults[key]:
+                del self.mapQueryResults[key][ip]
+                if len(self.mapQueryResults[key]) == 0:
+                    del self.mapQueryResults[key]
+        elif ip:
+            self.removeQueryResultByIP(ip)
+    
+    def removeQueryResultByIP(self, ip):
+        ''' remove all query result(s) from an ip.
+        '''
+        for query, result in self.mapQueryResults:
+            if ip in result:
+                del result[ip]
 
     def getQueryResult(self, key):
         ''' Retrieve a query result by given key
@@ -216,15 +261,18 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         ''' Perform a query.
         *query*: the query string. You need to combine/parse it yourself.
         *callback*: the callback function to handle query. you need to pass the data depends your business.
+        *return*: (resource, service_protocal, service_port). "resource" identify how to get the resource.
+                    "service_protocal" is the transfer protocal(http,tcp,udp) to serving the resource.
+                    "service_port" is the port to serving the resource.
         '''
         if callback:
             self.callbacks['query'] = callback
         else:
             callback = self.callbacks['query']
 
+        ret = None
         if callback:
 
-            ret = None
             # check cache
             if query in self.mapQueries:
                 t, ret = self.mapQueries[query]
@@ -292,7 +340,7 @@ class PeerServerHandler(SocketServer.BaseRequestHandler):
         if localIP == ip and localPort == port:
             return
 
-        self.log.info("recv: %s:%s" %(ip,data))
+        self.log.info("recv: %s - %s" %(ip,data))
 
         try:
             item = data.split(P.SPLITTER)
@@ -340,25 +388,27 @@ class PeerServerHandler(SocketServer.BaseRequestHandler):
 
                     # perform callback in doQuery
                     ret = self.server.doQuery(query, ip)
+                    data_port = 0 # May use self.DEFAULT_PORT + 1
 
-                    if ret:
+                    if ret and ret[0]:
                         answer = 'yes'
+                        data_port = ret[2]
                     else:
                         answer = 'no'
-                    msg = P.qry_reply(answer, query)
-
-                    port = self.server.mapPeers[ip]
+                    msg = P.qry_reply(answer, query, data_port)
+                    port = self.server.mapPeers[ip]  
                     socket.sendto(self.server.encode(msg), (ip, port))
-                    self.log.debug('Query result replied to %s:%d - %s' % (ip, port, msg))
+                    self.log.info('Query result replied to %s:%d - %s' % (ip, port, msg))
 
                 elif cmd == P.CMD_QRY_REPLY:
-                    assert(len(item) > 3)
-                    answer = item[2]
-                    query = P.SPLITTER.join(item[3:])
+                    assert(len(item) > 4)
+                    answer = item[3]
+                    data_port = int(item[2])
+                    query = P.SPLITTER.join(item[4:])
 
                     if answer == 'yes':
-                        self.server.addQueryResult(query, ip)
-                        self.log.info('Query result added (%s YES). - %s' % (ip, query))
+                        self.server.addQueryResult(query, ip, data_port)
+                        self.log.info('Query result added (%s:%d YES). - %s' % (ip, data_port, query))
                     else:
                         self.log.info('Query result from %s is NO. - %s' % (ip, query))
 

@@ -34,6 +34,11 @@ class ConnectionManager(object):
                 "query" - query callback. to parse query string and perform query.
                 "message" - message callback. to populate the message when received.
                 "action" - action callback. to parse and perform the action.
+        *callback returns*:
+                *"query"* callback should return (resource, service_protocal, service_port).
+                    "resource" identify how to get the resource.
+                    "service_protocal" is the transfer protocal(http,tcp,udp) to serving the resource.
+                    "service_port" is the port to serving the resource.
 
         '''
         self.log = Util.getLogger('ConnManager(%d)' % peer_port)
@@ -73,13 +78,6 @@ class ConnectionManager(object):
         '''
         Start a P2P server
         '''
-#         self.peerThread = threading.Thread(target=self.peerServer.serve_forever)
-#         self.peerThread.daemon = True
-#         self.peerThread.start()
-#         self.peerThread.name = 'PeerServer(%d)' % self.peerThread.ident
-# #         print '--------------',self.peerThread.ident
-# #         self.peerServer.log.name = self.peerThread.name
-#         self.log.info(":: PeerServer started")
         self.peerServer.start()
         self.dataServer.start()
 
@@ -87,8 +85,6 @@ class ConnectionManager(object):
         '''
         Stop serving
         '''
-#         if self.peerThread and self.peerThread.isAlive():
-#             self.peerServer.shutdown()
         self.peerServer.stop()
         self.dataServer.stop()
 
@@ -130,6 +126,13 @@ class ConnectionManager(object):
         *return*: the result address list [(ip, port), (ip, port) ...]
         '''
         return self.peerServer.getQueryResult(key=key)
+    
+    def removeQueryResult(self, key, ip=None):
+        ''' Remove a query result. Generally it should be invoked while a peer disconnected.
+        *key*: the key for result.
+        *ip*: the ip address for the result of this key.
+        '''
+        return self.peerServer.removeQueryResult(query=key, ip=ip)
 
     def addPeer(self, ip, port=PeerServer.DEFAULT_PORT):
         '''
@@ -165,7 +168,7 @@ class ConnectionManager(object):
         '''
         Callback when query received from a client peer.
         '''
-        ret = False
+        ret = (None, 'http', self.data_port)
         self.log.info(':: _on_query')
         if 'query' in self.callbacks:
             fn = self.callbacks['query']
@@ -181,39 +184,44 @@ class ConnectionManager(object):
 
     # -------------- DataServer events -------------
 
-    def _on_connecting(self):
+    def _on_connecting(self, **kwargs):
         '''
         Callback when a client connecting.
         '''
 
         pass
 
-    def _on_connected(self):
+    def _on_connected(self, **kwargs):
         '''
         Callback when a client connected.
         '''
         pass
 
-    def _on_transfer(self):
+    def _on_transfer(self, **kwargs):
         '''
         Callback when data transfering
         '''
         pass
 
-    def _on_disconnected(self):
+    def _on_disconnected(self, **kwargs):
         '''
         Callback when client disconnected
         '''
         pass
     
-    def _on_resource(self):
-        pass
+    def _on_resource(self, request, **kwargs):
+        ret = ''
+        self.log.info(':: _on_resource')
+        if 'resource' in self.callbacks:
+            fn = self.callbacks['resource']
+            ret = fn(request, **kwargs)
+        return ret
     
-    def _on_stream(self):
-        pass
+    def _on_stream(self, request, **kwargs):
+        return None
     
-    def _on_signature(self):
-        pass
+    def _on_signature(self, **kwargs):
+        return True
     
 
 

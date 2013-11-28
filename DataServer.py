@@ -105,15 +105,9 @@ class DataServer(object):
         self.log.debug(':: _on_resource')
         if 'resource' in self.callbacks:
             fn = self.callbacks['resource']
-            if fn: ret = fn(**kwargs)
+            if fn: ret = fn(request, **kwargs)
         return ret
-#                 print path
-#         rid = self.headers['ResourceId']
-#         etag = self.headers['ETag']
-#
-#         ret = self.server.getLocalPath(rid, etag)
-#self.mw.pathToWatch + '/' + self.mw.getPathName(resourceID, eTag)
-#        return ''
+
 
     def _on_stream(self, request, **kwargs):
         print '-'*60
@@ -127,7 +121,7 @@ class DataServer(object):
         self.log.info(':: _on_stream')
         if 'stream' in self.callbacks:
             fn = self.callbacks['stream']
-            ret = fn(**kwargs)
+            ret = fn(request, **kwargs)
         return ret
 
     def _on_signature(self, **kwargs):
@@ -141,16 +135,6 @@ class DataServer(object):
             fn = self.callbacks['signature']
             ret = fn(**kwargs)
         return ret
-
-#         salt = "JDuehg256(#&63?>Md;lu%#2hxSg37OIh#O*83hf_=0!@jkmfio28"
-#
-#         try:
-#         rid = kwargs['ResourceId']
-#         etag = kwargs['ETag']
-#         str_to_sign = "%s-%s-%s" % (salt, etag, rid)
-#         sign = Util.md5(str_to_sign)
-#         remote_sign = self.headers['X-P2PSyncSimpleSignature']
-#         return sign == remote_sign
 
     def _on_range(self, *kwargs):
         return ''

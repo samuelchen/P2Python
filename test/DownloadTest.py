@@ -20,6 +20,11 @@ from tornado import httpclient, ioloop
 
 flag = False
 workpath = os.getcwd() + '/testdata'
+downloaded_size = 0
+source_file = workpath + '/downloadsource.log'
+target_file = workpath + '/asyncDownloadedFile.log'
+file_size = os.path.getsize(source_file)
+
 print 'workpath : ', workpath
 
 class DownloadTest(unittest.TestCase):
@@ -39,23 +44,20 @@ class DownloadTest(unittest.TestCase):
 
     def testDownload(self):
 
-        def on_resource(**kwargs):
+        def on_resource(request, **kwargs):
+            global sourcef_file
             print 'on_resource'
-            global workpath
-            path = '%s/%s' % (workpath, 'downloadsource.log')
-            print path
-            return path
+            print source_file
+            return source_file
 
-        def on_stream(**kwargs):
-            global workpath
-            path = '%s/%s' % (workpath, 'downloadsource.log')
-            f = open(path, 'rb')
+        def on_stream(request, **kwargs):
+            global sourcef_file
+            f = open(sourcef_file, 'rb')
             return f
 
         def on_signature(**kwargs):
             print 'on_signature'
             return True
-
 
         def asyncDownloadHandler(response):
             print 'on_download(asyncDownloadHandler)'
@@ -69,15 +71,17 @@ class DownloadTest(unittest.TestCase):
             #print data
             print '-' * 60
 
-            global workpath
-            fname = workpath + '/asyncDownloadedFile.log'
-            f = open(fname, 'ab')
+            global downloaded_size, taget_file, file_size
+            f = open(target_file, 'ab')
             f.write(data)
             f.close()
-            #ioloop.IOLoop.instance().stop()
+            downloaded_size += l
+            if downloaded_size >= file_size: 
+                ioloop.IOLoop.instance().stop()
 
-        global flag, workpath
+        global flag, downloaded_size
         flag = False
+        downloaded_size = 0
         self.svr1.callbacks['resource'] = on_resource
         self.svr1.callbacks['signature'] = on_signature
 
@@ -88,17 +92,11 @@ class DownloadTest(unittest.TestCase):
         time.sleep(1)
 
         ioloop.IOLoop.instance().stop()
-        f1 = open(workpath + '/downloadsource.log', 'rb')
-        s1 = f1.read(-1)
-        s1 = Util.md5(s1)
-        f1.close()
-        print 's1 = %s' % s1
+        s1 = Util.md5_file(source_file)
+        print 'md5 of source = %s' % s1
 
-        f2 = open(workpath + '/asyncDownloadedFile.log', 'rb')
-        s2 = f2.read(-1)
-        s2 = Util.md5(s2)
-        f2.close()
-        print 's2 = %s' % s2
+        s2 = Util.md5_file(target_file)
+        print 'md5 of target = %s' % s2
         
         flag = s1 == s2
         print 'testQuery done', flag
