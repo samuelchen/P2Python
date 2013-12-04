@@ -89,7 +89,7 @@ class ConnectionManager(object):
         self.dataServer.stop()
 
     def isAlive(self):
-        return self.peerServer.isAlive()
+        return self.peerServer.isAlive() or self.dataServer.isAlive()
 
     def _broadcast(self, message=None, port=None, loop=False):
         '''

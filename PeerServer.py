@@ -64,6 +64,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         
     def stop(self):
         if self.thread and self.thread.isAlive():
+            self.sendRegister(loop=False)
             self.shutdown()
             self.log.info(':: PeerServer is shutting down.')
         else:

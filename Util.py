@@ -6,6 +6,7 @@ Created on 2013-11-20
 '''
 import logging
 import sys, hashlib
+import os
 
 class LogLevelFilter(object):
     def __init__(self, level):
@@ -15,12 +16,17 @@ class LogLevelFilter(object):
         return logRecord.levelno <= self.__level
 
 def getLogger(name='P2Python'):
-
+    path=os.path.join(os.getcwd(), 'log')
+    if os.path.isdir(path)==False:
+        os.mkdir(path)    
+    
+    logpath = 'log/p2psync.log'
     logger = logging.getLogger(name)  
     logger.setLevel(logging.DEBUG)
 
     # file handler.
-    fh = logging.FileHandler("p2psync.log")  
+    fh = logging.handlers.TimedRotatingFileHandler(logpath)
+    fh.suffix = "%Y%m%d.log"
     fh.setLevel(logging.INFO)
     # console handler
     ch = logging.StreamHandler(stream=sys.stdout)  
@@ -30,7 +36,7 @@ def getLogger(name='P2Python'):
     eh = logging.StreamHandler(stream=sys.stderr)
     eh.setLevel(logging.ERROR)
     # create formatter and add it to the handlers  
-    formatter = logging.Formatter("%(asctime)-14s - %(name)s - %(levelname)s - %(message)s")  
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")  
     ch.setFormatter(formatter)  
     fh.setFormatter(formatter)
     eh.setFormatter(formatter)
