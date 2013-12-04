@@ -56,22 +56,27 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         self.log.critical('*** DO NOT send privacy data before you encrypt it.***')
         
     def start(self):
+        if self.isAlive(): return
+        
         self.thread = threading.Thread(target=self.serve_forever)
         self.thread.daemon = True
         self.thread.start()
         self.thread.name = 'PeerServer(%d)' % self.thread.ident
+
         self.log.info(':: PeerServer started')
         
     def stop(self):
+        self._cast_loop = False
+        self.socket.close()
         if self.thread and self.thread.isAlive():
-            self.sendRegister(loop=False)
             self.shutdown()
+            self.thread = None
             self.log.info(':: PeerServer is shutting down.')
         else:
             self.log.info(':: PeerServer was shutdown.')
     
     def isAlive(self):
-        return self.thread.isAlive()
+        return self.thread and self.thread.isAlive()
 
     def _broadcast(self, message=None, port=None, loop = False):
         ''' Broadcast registering message to the network.
@@ -411,6 +416,7 @@ class PeerServerHandler(SocketServer.BaseRequestHandler):
                         self.server.addQueryResult(query, ip, data_port)
                         self.log.info('Query result added (%s:%d YES). - %s' % (ip, data_port, query))
                     else:
+                        self.server.removeQueryResult(query, ip)
                         self.log.info('Query result from %s is NO. - %s' % (ip, query))
 
         except Exception, e:

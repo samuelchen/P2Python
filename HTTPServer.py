@@ -29,9 +29,10 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
                     you need to generate/parse the data depends your business.
 
                     "resource" - To query a resource and return the path if found. Otherwise, return None.
-                    "stream" - To query a resource and return the file like object if found. Otherwise, return None.
                     "signature" - To generate a signature.
-                    "range" - To generate the service range. Returns (offset, length). If length not specified, means to end.
+                    "connect" - Triggered while request is connecting
+                    "disconnect" - Triggered after request is processed and disconnected
+                    "transfer" - Triggered while the data is being transfered
 
         '''
         self.log = Util.getLogger('HTTPServer(%d)' % self.server_address[1])
@@ -49,15 +50,23 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
 
         if not self.log: self.log = self.server.log
         self.log.info('Request GET from %s:%d' % self.client_address)
-        self.response_resource()
+        self.handle_request()
 
     def do_POST(self):
         if not self.log: self.log = self.server.log
         self.log.info('Request POST from %s:%d' % self.client_address)
         #self.log.debug(self.request)
-        self.response_resource()
+        self.handle_request()
         
-    def response_resource(self):
+    def handle_request(self):
+        
+        if 'connect' in self.server.callbacks:
+            fn = self.server.callbacks['connect']
+            try:
+                fn(self.request, **self.headers)
+            except Exception, e:
+                self.log.exception('Error occurs  while invoking "connect" callback.')
+            
         if self.server.connections > 2:
             self.send_response(405, 'Server is busy')
             return
@@ -71,7 +80,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
                 signed = fn(**self.headers)
                 if not signed:
                     self._counter_release()
-                    self.send_response(401)
+                    self.send_response(401, 'Not signed')
                     return
             except Exception, e:
                 self._counter_release()
@@ -102,6 +111,15 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
         #self.end_headers()
 
         self._counter_release()
+        
+        if 'disconnect' in self.server.callbacks:
+            fn = self.server.callbacks['disconnect']
+            try:
+                fn(self.request, **self.headers)
+            except Exception, e:
+                self.log.exception('Error occurs  while invoking "disconnect" callback.')
+        
+        
         
     def _counter_lock(self):
         mutex.acquire(False)
@@ -183,6 +201,14 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def copyfile(self, fsrc, fdst, offset=0, length=0, chunk_size=16*1024):
         """copy data from file-like object fsrc to file-like object fdst"""
+        
+#         if 'transfer' in self.server.callbacks:
+#             fn = self.server.callbacks['transfer']
+#             try:
+#                 fn(**{'offset':offset, 'length':length})
+#             except Exception, e:
+#                 self.log.exception('Error occurs  while invoking "transfer" callback.')
+                
         copied = 0
         fsrc.seek(offset)
         if self.server._chunked:

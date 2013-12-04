@@ -60,7 +60,7 @@ class DataServer(object):
         if self.protocal == 'tcp':
             pass
         elif self.protocal == 'http':
-            self.instance, self.thread = self.startHTTPServer()
+            self.instance, self.thread = self._startHTTPServer()
         elif self.protocal == 'udp':
             pass
 
@@ -69,22 +69,21 @@ class DataServer(object):
             self.instance.shutdown()
 
     def isAlive(self):
-        return self.thread.isAlive()
+        return self.thread and self.thread.isAlive()
 
     @property
     def ip(self):
         return self.instance.server_address[0]
 
-    def startHTTPServer(self):
+    def _startHTTPServer(self):
 
-        callbacks = {
-            'resource'      : self._on_resource,
-            'range'         : None,
-            'signature'     : self._on_signature,
-        }
+#         callbacks = {
+#             'resource'      : self._on_resource,
+#             'signature'     : self._on_signature,
+#         }
 
         svr = HTTPServer(('0.0.0.0', self.port), HTTPRequestHandler)
-        svr.init(callbacks=callbacks, chunked=True)
+        svr.init(callbacks=self.callbacks, chunked=True)
         t = threading.Thread(target=svr.serve_forever)
         t.daemon = True
         t.start()
@@ -94,50 +93,32 @@ class DataServer(object):
 
     # --------- http callbacks ----------
 
-    def _on_resource(self, request, **kwargs):
-        print '-'*60
-        print request
-        print '-'*60
-        print kwargs
-        print '-'*60
+#     def _on_resource(self, request, **kwargs):
+#         print '-'*60
+#         print request
+#         print '-'*60
+#         print kwargs
+#         print '-'*60
+# 
+#         ret = None
+#         self.log.debug(':: _on_resource')
+#         if 'resource' in self.callbacks:
+#             fn = self.callbacks['resource']
+#             if fn: ret = fn(request, **kwargs)
+#         return ret
+# 
+#     def _on_signature(self, **kwargs):
+# 
+#         """Simple signature for intranet download
+#         """
+# 
+#         ret = False
+#         self.log.info(':: _on_signature')
+#         if 'signature' in self.callbacks:
+#             fn = self.callbacks['signature']
+#             ret = fn(**kwargs)
+#         return ret
 
-        ret = None
-        self.log.debug(':: _on_resource')
-        if 'resource' in self.callbacks:
-            fn = self.callbacks['resource']
-            if fn: ret = fn(request, **kwargs)
-        return ret
-
-
-    def _on_stream(self, request, **kwargs):
-        print '-'*60
-        print request
-        print '-'*60
-        print kwargs
-        print '-'*60
-        self.log.debug('_on_stream')
-
-        ret = None
-        self.log.info(':: _on_stream')
-        if 'stream' in self.callbacks:
-            fn = self.callbacks['stream']
-            ret = fn(request, **kwargs)
-        return ret
-
-    def _on_signature(self, **kwargs):
-
-        """Simple signature for intranet download
-        """
-
-        ret = False
-        self.log.info(':: _on_signature')
-        if 'signature' in self.callbacks:
-            fn = self.callbacks['signature']
-            ret = fn(**kwargs)
-        return ret
-
-    def _on_range(self, *kwargs):
-        return ''
 
 if __name__ == '__main__':
     svr = DataServer(protocal='http')

@@ -51,6 +51,14 @@ def msg(message, port):
     msg = SPLITTER.join((PREFIX, CMD_MSG, str(port), message))
     return msg
 
+def act(action, port):
+    ''' Action format
+        *action*: the action string to be sent. your system should understand it.
+        For example, P2P||ACT||37122||FileList()
+    '''
+    msg = SPLITTER.join((PREFIX, CMD_MSG, str(port), action))
+    return msg
+
 
 def qry(query):
     '''Query format
@@ -64,7 +72,7 @@ def qry(query):
 
 def qry_reply(answer, data, data_port):
     '''Query reply format
-    *data*, the query string to be sent.(should be same
+    *data*, the query string to be sent.(should be same as query)
     For example, P2P||QRYACK||yes||resource_id=34||name='sam'||hash='MD5VALUE'
                 P2P||QRYACK||no||resource_id='34'&name='sam'&hash='MD5VALUE'
     '''

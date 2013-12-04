@@ -36,9 +36,9 @@ class ConnectionManager(object):
                 "action" - action callback. to parse and perform the action.
         *callback returns*:
                 *"query"* callback should return (resource, service_protocal, service_port).
-                    "resource" identify how to get the resource.
-                    "service_protocal" is the transfer protocal(http,tcp,udp) to serving the resource.
-                    "service_port" is the port to serving the resource.
+                        "resource" identify how to get the resource.
+                        "service_protocal" is the transfer protocal(http,tcp,udp) to serving the resource.
+                        "service_port" is the port to serving the resource.
 
         '''
         self.log = Util.getLogger('ConnManager(%d)' % peer_port)
@@ -65,15 +65,20 @@ class ConnectionManager(object):
         
         
         dataCallbacks = {
-            'connect'       : self._on_connected,
+            'connect'       : self._on_connect,
             'transfer'      : self._on_transfer,
-            'disconnect'    : self._on_disconnected,
+            'disconnect'    : self._on_disconnect,
             'resource'      : self._on_resource,
             'signature'     : self._on_signature,
         
         }
         self.dataServer = DataServer(port=data_port, protocal=data_transfer_protocal, callbacks=dataCallbacks)
 
+    def __del__(self):
+        self.stop()
+        del self.peer_server
+        del self.data_server
+    
     def start(self):
         '''
         Start a P2P server
@@ -184,30 +189,22 @@ class ConnectionManager(object):
 
     # -------------- DataServer events -------------
 
-    def _on_connecting(self, **kwargs):
+    def _on_connect(self, requst, **kwargs):
         '''
         Callback when a client connecting.
         '''
-
-        pass
-
-    def _on_connected(self, **kwargs):
-        '''
-        Callback when a client connected.
-        '''
+        self.log.info(':: _on_connect')
         pass
 
     def _on_transfer(self, **kwargs):
         '''
         Callback when data transfering
         '''
-        pass
+        self.log.info(':: _on_transfer')
 
-    def _on_disconnected(self, **kwargs):
-        '''
-        Callback when client disconnected
-        '''
-        pass
+    def _on_disconnect(self, request, **kwargs):
+        self.log.info(':: _on_disconnect')
+
     
     def _on_resource(self, request, **kwargs):
         ret = ''
@@ -217,11 +214,14 @@ class ConnectionManager(object):
             ret = fn(request, **kwargs)
         return ret
     
-    def _on_stream(self, request, **kwargs):
-        return None
-    
     def _on_signature(self, **kwargs):
-        return True
+        ret = False
+        self.log.info(':: _on_signature')
+        if 'signature' in self.callbacks:
+            fn = self.callbacks['signature']
+            ret = fn(**kwargs)
+        return ret
+    
     
 
 
