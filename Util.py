@@ -4,7 +4,7 @@ Created on 2013-11-20
 
 @author: samuelchen
 '''
-import logging
+import logging, logging.handlers
 import sys, hashlib
 import os
 
@@ -19,17 +19,11 @@ def setLogPath(path='p2python.log'):
     os.environ['P2PYTHON_LOG'] = path
 
 def getLogger(name='P2Python'):
-#     path=os.path.join(os.getcwd(), 'log')
-#     if os.path.isdir(path)==False:
-#         os.mkdir(path)    
-    
-#     if 'p2python_log_path' in globals():
-#         logpath = globals()['p2python_log_path']
-#     else:
-#         logpath = 'p2psync.log'
 
-    log_path = os.environ['P2PYTHON_LOG']
-    if not log_path:
+    log_path = 'p2python.log'
+    if 'P2PYTHON_LOG' in os.environ:
+        log_path = os.environ['P2PYTHON_LOG']
+    else:
         setLogPath()
     
     logger = logging.getLogger(name)  
@@ -41,7 +35,7 @@ def getLogger(name='P2Python'):
     fh.setLevel(logging.INFO)
     # console handler
     ch = logging.StreamHandler(stream=sys.stdout)  
-    ch.setLevel(logging.INFO)
+    ch.setLevel(logging.DEBUG)
     ch.addFilter(LogLevelFilter(logging.WARN))
     # stderr handler
     eh = logging.StreamHandler(stream=sys.stderr)
@@ -59,7 +53,7 @@ def getLogger(name='P2Python'):
     logger.propagate = False
     return logger
 
-log = getLogger('Util')
+log = getLogger()
 
 
 # import socket, fcntl, struct

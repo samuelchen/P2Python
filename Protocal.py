@@ -21,6 +21,7 @@ CMD_CAST = ''
 SPLITTER = '||'
 
 def setPrefix(prefix):
+    global PREFIX
     PREFIX = prefix
 
 

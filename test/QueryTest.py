@@ -6,15 +6,11 @@ Created on 2013-11-9
 '''
 
 import sys, os
-sys.path.append('%s/../' % os.getcwd())
+sys.path.insert(0, '%s/../' % os.getcwd())
 
 import unittest
-from PeerServer import PeerServer
-from DataServer import DataServer
-from ConnectionManager import ConnectionManager
-import threading
+from conn_mgr import ConnectionManager
 import time
-import Util
 
 flag = False
 
@@ -52,7 +48,7 @@ class QueryTest(unittest.TestCase):
                 print 'I received a query from %(ip)s >> %(data)s' % kwargs
                 print '-' * 60
                 flag = True
-            return flag
+            return (os.getcwd(), 'http', self.svr2.data_port)
 
         self.svr2.callbacks['query'] = on_query
 

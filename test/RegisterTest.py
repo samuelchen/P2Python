@@ -5,15 +5,11 @@ Created on 2013-11-19
 @author: samuelchen
 '''
 import sys, os
-sys.path.append('%s/../' % os.getcwd())
+sys.path.insert(0, '%s/../' % os.getcwd())
 
 import unittest
-from PeerServer import PeerServer
-from DataServer import DataServer
-from ConnectionManager import ConnectionManager
-import threading
+from conn_mgr import ConnectionManager
 import time
-import Util
 
 flag = False
 
@@ -26,6 +22,8 @@ class RegisterTest(unittest.TestCase):
         self.svr1 = ConnectionManager(peer_port = 22222, data_port = 22223)
         self.svr1.addPeer(ip, 33333)
         self.svr1.start()
+        #self.svr1.peerServer._heartbeat_loop = False  # disable heart-beat check if required.
+        
 
         self.svr2 = ConnectionManager(peer_port = 33333, data_port = 33334)
         self.svr2.addPeer(ip, 22222)
@@ -58,13 +56,6 @@ class RegisterTest(unittest.TestCase):
         self.svr2.sendRegister(loop=True)
         time.sleep(3)
 
-        self.svr1.sendRegister(loop=False)
-        self.svr2.sendRegister(loop=False)
-
-        self.svr1.stop()
-        self.svr2.stop()
-        while self.svr1.isAlive() or self.svr2.isAlive():
-            time.sleep(0.5)
 
         print 'testRegister done', flag
         assert(flag)

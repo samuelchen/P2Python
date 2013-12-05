@@ -6,12 +6,12 @@ Created on 2013-11-19
 '''
 
 import sys, os
-sys.path.append('%s/../' % os.getcwd())
+sys.path.insert(0, '%s/../' % os.getcwd())
 
 import unittest
-from ConnectionManager import ConnectionManager
+from conn_mgr import ConnectionManager
 import time
-import Util
+import util
 
 flag = False
 
@@ -32,9 +32,9 @@ class SendMessageTest(unittest.TestCase):
     def tearDown(self):
         self.svr1.stop()
         self.svr2.stop()
-        while self.svr1.isAlive() or self.svr2.isAlive():
-            time.sleep(0.5)
-            print 'svr1: %s,  svr2: %s' % (self.svr1.isAlive(), self.svr2.isAlive())
+#         while self.svr1.isAlive() or self.svr2.isAlive():
+#             time.sleep(0.5)
+#             print 'svr1: %s,  svr2: %s' % (self.svr1.isAlive(), self.svr2.isAlive())
 
     def testSendMessage(self):
 

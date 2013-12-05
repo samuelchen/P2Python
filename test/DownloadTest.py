@@ -6,16 +6,14 @@ Created on 2013-11-19
 '''
 
 import sys, os
-sys.path.append('%s/../' % os.getcwd())
+sys.path.insert(0, '%s/../' % os.getcwd())
 
 import unittest
-from DataServer import DataServer
-from ConnectionManager import ConnectionManager
-import threading
+from data_server import DataServer
+from conn_mgr import ConnectionManager
 import time
-import Util
-import os
 from tornado import httpclient, ioloop
+import util
 
 
 flag = False
@@ -92,10 +90,10 @@ class DownloadTest(unittest.TestCase):
         time.sleep(1)
 
         ioloop.IOLoop.instance().stop()
-        s1 = Util.md5_file(source_file)
+        s1 = util.md5_file(source_file)
         print 'md5 of source = %s' % s1
 
-        s2 = Util.md5_file(target_file)
+        s2 = util.md5_file(target_file)
         print 'md5 of target = %s' % s2
         
         flag = s1 == s2
