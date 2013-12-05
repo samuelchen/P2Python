@@ -14,22 +14,29 @@ class LogLevelFilter(object):
 
     def filter(self, logRecord):
         return logRecord.levelno <= self.__level
+    
+def setLogPath(path='p2python.log'):
+    os.environ['P2PYTHON_LOG'] = path
 
 def getLogger(name='P2Python'):
 #     path=os.path.join(os.getcwd(), 'log')
 #     if os.path.isdir(path)==False:
 #         os.mkdir(path)    
     
-    if 'p2python_log_path' in globals():
-        logpath = globals()['p2python_log_path']
-    else:
-        logpath = 'p2psync.log'
+#     if 'p2python_log_path' in globals():
+#         logpath = globals()['p2python_log_path']
+#     else:
+#         logpath = 'p2psync.log'
+
+    log_path = os.environ['P2PYTHON_LOG']
+    if not log_path:
+        setLogPath()
     
     logger = logging.getLogger(name)  
     logger.setLevel(logging.DEBUG)
 
     # file handler.
-    fh = logging.handlers.TimedRotatingFileHandler(logpath)
+    fh = logging.handlers.TimedRotatingFileHandler(log_path)
     fh.suffix = "%Y%m%d.log"
     fh.setLevel(logging.INFO)
     # console handler
