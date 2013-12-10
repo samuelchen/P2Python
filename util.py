@@ -18,33 +18,42 @@ class LogLevelFilter(object):
 def setLogPath(path='p2python.log'):
     os.environ['P2PYTHON_LOG'] = path
 
+fh = ch = eh = None
+log_path = ''
 def getLogger(name='P2Python'):
 
-    log_path = 'p2python.log'
-    if 'P2PYTHON_LOG' in os.environ:
+    global fh, ch, eh, log_path
+    
+    if not log_path and 'P2PYTHON_LOG' in os.environ:
         log_path = os.environ['P2PYTHON_LOG']
     else:
+        log_path = 'p2python.log'
         setLogPath()
     
     logger = logging.getLogger(name)  
     logger.setLevel(logging.DEBUG)
 
-    # file handler.
-    fh = logging.handlers.TimedRotatingFileHandler(log_path)
-    fh.suffix = "%Y%m%d.log"
-    fh.setLevel(logging.INFO)
-    # console handler
-    ch = logging.StreamHandler(stream=sys.stdout)  
-    ch.setLevel(logging.DEBUG)
-    ch.addFilter(LogLevelFilter(logging.WARN))
-    # stderr handler
-    eh = logging.StreamHandler(stream=sys.stderr)
-    eh.setLevel(logging.ERROR)
     # create formatter and add it to the handlers  
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")  
-    ch.setFormatter(formatter)  
-    fh.setFormatter(formatter)
-    eh.setFormatter(formatter)
+    
+    # file handler.
+    if not fh:
+        fh = logging.handlers.TimedRotatingFileHandler(log_path)
+        fh.suffix = "%Y%m%d.log"
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+    # console handler
+    if not ch:
+        ch = logging.StreamHandler(stream=sys.stdout)  
+        ch.setLevel(logging.DEBUG)
+        ch.addFilter(LogLevelFilter(logging.WARN))
+        ch.setFormatter(formatter)  
+    # stderr handler
+    if not eh:
+        eh = logging.StreamHandler(stream=sys.stderr)
+        eh.setLevel(logging.ERROR)
+        eh.setFormatter(formatter)
+
     # add the handlers to logger  
     logger.addHandler(ch)  
     logger.addHandler(fh)

@@ -201,12 +201,10 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
     def copyfile(self, fsrc, fdst, offset=0, length=0, chunk_size=16*1024):
         """copy data from file-like object fsrc to file-like object fdst"""
         
-#         if 'transfer' in self.server.callbacks:
-#             fn = self.server.callbacks['transfer']
-#             try:
-#                 fn(**{'offset':offset, 'length':length})
-#             except Exception, e:
-#                 self.log.exception('Error occurs  while invoking "transfer" callback.')
+        fn = None
+        if 'transfer' in self.server.callbacks:
+            fn = self.server.callbacks['transfer']
+
                 
         copied = 0
         fsrc.seek(offset)
@@ -226,6 +224,11 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
                 fdst.write('\r\n')
                 fdst.write(buf)
                 fdst.write('\r\n')
+                if fn:
+                    try:
+                        fn(**{'offset':offset, 'length':length})
+                    except Exception, e:
+                        self.log.exception('Error occurs  while invoking "transfer" callback.')
             fdst.write('0\r\n\r\n')
         else:
             while 1:

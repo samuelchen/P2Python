@@ -235,7 +235,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
     def removeQueryResultByIP(self, ip):
         ''' remove all query result(s) from an ip.
         '''
-        for query, result in self.mapQueryResults:
+        for query, result in self.mapQueryResults.iteritems():
             if ip in result:
                 del result[ip]
 
@@ -250,7 +250,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
             for ip, r in results.iteritems():
                 t, port = r
                 if time.time() - t > self.RESULT_EXPIRES:
-                    results.remove(ip)
+                    del results[ip]
                 else:
                     ret.append((ip, port))
         return ret
@@ -274,7 +274,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         del self.mapPeers[ip]
 
     def getPeerPort(self, ip):
-        ret = None
+        ret = self.DEFAULT_PORT
         if ip in self.mapPeers:
             ret = self.mapPeers[ip][0]
         return ret

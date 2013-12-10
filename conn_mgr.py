@@ -185,7 +185,12 @@ class ConnectionManager(object):
         '''
         Callback when action received from a client peer.
         '''
-        pass
+        self.log.info(':: _on_action')
+        ret = None
+        if 'action' in self.callbacks:
+            fn = self.callbacks['action']
+            ret = fn(**kwargs)
+        return ret
 
 
     # -------------- DataServer events -------------
@@ -195,17 +200,30 @@ class ConnectionManager(object):
         Callback when a client connecting.
         '''
         self.log.info(':: _on_connect')
-        pass
+        ret = None
+        if 'connect' in self.callbacks:
+            fn = self.callbacks['connect']
+            ret = fn(**kwargs)
+        return ret
 
     def _on_transfer(self, **kwargs):
         '''
         Callback when data transfering
         '''
         self.log.info(':: _on_transfer')
+        ret = None
+        if 'transfer' in self.callbacks:
+            fn = self.callbacks['transfer']
+            ret = fn(**kwargs)
+        return ret
 
     def _on_disconnect(self, request, **kwargs):
         self.log.info(':: _on_disconnect')
-
+        ret = None
+        if 'disconnect' in self.callbacks:
+            fn = self.callbacks['disconnect']
+            ret = fn(**kwargs)
+        return ret
     
     def _on_resource(self, request, **kwargs):
         ret = ''
