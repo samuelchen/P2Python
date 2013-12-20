@@ -69,6 +69,9 @@ class DataServer(object):
 
     def isAlive(self):
         return self.thread and self.thread.isAlive()
+    
+    def isBusy(self):
+        return self.instance.isBusy()
 
     @property
     def ip(self):

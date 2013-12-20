@@ -174,7 +174,12 @@ class ConnectionManager(object):
         '''
         Callback when query received from a client peer.
         '''
-        ret = (None, 'http', self.data_port)
+        ret = (None, self.dataServer.protocal, self.data_port)
+        
+        # to not being picked out when busy
+        if self.dataServer.isBusy():
+            return
+        
         self.log.info(':: _on_query')
         if 'query' in self.callbacks:
             fn = self.callbacks['query']

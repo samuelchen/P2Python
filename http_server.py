@@ -20,6 +20,7 @@ __all__ = ['HTTPServer', 'HTTPRequestHandler']
 class HTTPServer(BaseHTTPServer.HTTPServer):
 
     connections = 0
+    
     def init(self, callbacks={}, chunked=True):
         ''' Initialize the data server.
 
@@ -39,6 +40,9 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
         self._chunked = chunked
         self.log.debug('Initialized on %s:%d.' % (self.server_address))
         self.timeout =99999
+        
+    def isBusy(self):
+        return self.connections > 2
     
 class HTTPRequestHandler(SimpleHTTPRequestHandler):
     server_version = "P2PythonHTTPServer/" + __version__
@@ -66,7 +70,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
             except Exception, e:
                 self.log.exception('Error occurs  while invoking "connect" callback.')
             
-        if self.server.connections > 2:
+        if self.server.isBusy():
             self.send_response(405, 'Server is busy')
             return
 
@@ -226,7 +230,7 @@ class HTTPRequestHandler(SimpleHTTPRequestHandler):
                 fdst.write('\r\n')
                 if fn:
                     try:
-                        fn(**{'offset':offset, 'length':length})
+                        fn(**{'offset':offset, 'length':l})
                     except Exception, e:
                         self.log.exception('Error occurs  while invoking "transfer" callback.')
             fdst.write('0\r\n\r\n')

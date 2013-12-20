@@ -51,8 +51,11 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         self.log = util.getLogger('PeerServer(%d)' % self.server_address[1])
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+        # server caches
         self.mapPeers = {} # registered peers
         self.mapQueries = {} # cache for query result on server side
+        
+        # client caches
         self.mapQueryResults = {}  # remote feedback for my query on client side
 
         self.callbacks = callbacks
@@ -328,8 +331,9 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
                     port, tm = self.mapPeers[ip]
                     now = time.time()
                     if now - tm > PeerServer.HEARTBEAT_LOOP:
+                        self.removeQueryResultByIP(ip)
                         self.removePeer(ip)
-                        self.log.debug('Peer %s:%d was disconnected.' % (ip, port))
+                        self.log.info('Peer %s:%d was disconnected.' % (ip, port))
                     
                 time.sleep(PeerServer.HEARTBEAT_LOOP)
 
@@ -383,7 +387,7 @@ class PeerServerHandler(SocketServer.BaseRequestHandler):
         if localIP == ip and localPort == port:
             return
 
-        self.log.info("recv: %s - %s" %(ip,data))
+        self.log.debug("recv: %s - %s" %(ip,data))
 
         try:
             item = data.split(P.SPLITTER)
@@ -454,7 +458,7 @@ class PeerServerHandler(SocketServer.BaseRequestHandler):
                         self.log.info('Query result added (%s:%d YES). - %s' % (ip, data_port, query))
                     else:
                         self.server.removeQueryResult(query, ip)
-                        self.log.info('Query result from %s is NO. - %s' % (ip, query))
+                        self.log.debug('Query result from %s is NO. - %s' % (ip, query))
 
         except Exception, e:
             self.log.exception("PeerServer error: %s" % e)

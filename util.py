@@ -30,6 +30,12 @@ def getLogger(name='P2Python'):
         log_path = 'p2python.log'
         setLogPath()
     
+    log_level = logging.INFO
+    if 'P2PYTHON_LOG_LEVEL' in os.environ:
+        lvl = os.environ['P2PYTHON_LOG_LEVEL'].upper()
+        if lvl == 'DEBUG' or lvl == 'ALL': log_level = logging.DEBUG
+        elif lvl == 'ERROR': log_level = logging.ERROR
+    
     logger = logging.getLogger(name)  
     logger.setLevel(logging.DEBUG)
 
@@ -40,7 +46,7 @@ def getLogger(name='P2Python'):
     if not fh:
         fh = logging.handlers.TimedRotatingFileHandler(log_path)
         fh.suffix = "%Y%m%d.log"
-        fh.setLevel(logging.INFO)
+        fh.setLevel(log_level)
         fh.setFormatter(formatter)
     # console handler
     if not ch:
