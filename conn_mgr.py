@@ -96,6 +96,14 @@ class ConnectionManager(object):
 
     def isAlive(self):
         return self.peerServer.isAlive() or self.dataServer.isAlive()
+    
+    @property
+    def paused(self):
+        return self.peerServer.paused
+
+    @paused.setter
+    def paused(self, val):
+        self.peerServer.paused = val
 
     def _broadcast(self, message=None, port=None, loop=False):
         '''

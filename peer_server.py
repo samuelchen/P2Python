@@ -25,6 +25,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
     thread = None
     _heartbeat_loop = False
     _cast_loop = False
+    _paused = False
     
     assert(HEARTBEAT_LOOP >= BROADCAST_LOOP * 3)
 
@@ -87,6 +88,17 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         else:
             self.log.info(':: PeerServer was shutdown.')
     
+    @property
+    def paused(self):
+        return self._paused
+
+    @paused.setter
+    def paused(self, val):
+        # TODO: expires caches if required
+        self._cast_loop = not val
+        self._heartbeat_loop = not val
+        self._paused = val
+        
     def isAlive(self):
         return self.thread and self.thread.isAlive()
 
