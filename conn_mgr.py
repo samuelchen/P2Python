@@ -99,11 +99,11 @@ class ConnectionManager(object):
     
     @property
     def paused(self):
-        return self.peerServer.paused
+        return self.peerServer.paused()
 
     @paused.setter
     def paused(self, val):
-        self.peerServer.paused = val
+        self.peerServer.pause(val)
 
     def _broadcast(self, message=None, port=None, loop=False):
         '''

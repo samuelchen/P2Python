@@ -88,16 +88,17 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         else:
             self.log.info(':: PeerServer was shutdown.')
     
-    @property
     def paused(self):
         return self._paused
 
-    @paused.setter
-    def paused(self, val):
+    def pause(self, val):
         # TODO: expires caches if required
         self._cast_loop = not val
         self._heartbeat_loop = not val
         self._paused = val
+        if not self._paused:
+            self.sendRegister(loop=True)
+            self.checkHeartbeat(loop=True)
         
     def isAlive(self):
         return self.thread and self.thread.isAlive()
@@ -286,7 +287,8 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
         ''' remove a registred peer.
         *ip*: the ip address of the peer to remove.
         '''
-        del self.mapPeers[ip]
+        if ip in self.mapPeers:
+            del self.mapPeers[ip]
 
     def getPeerPort(self, ip):
         ret = self.DEFAULT_PORT
@@ -345,7 +347,7 @@ class PeerServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
                     if now - tm > PeerServer.HEARTBEAT_LOOP:
                         self.removeQueryResultByIP(ip)
                         self.removePeer(ip)
-                        self.log.info('Peer %s:%d was disconnected.' % (ip, port))
+                        self.log.warn('Peer %s:%d was disconnected.' % (ip, port))
                     
                 time.sleep(PeerServer.HEARTBEAT_LOOP)
 
