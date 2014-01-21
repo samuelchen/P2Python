@@ -13,4 +13,4 @@ The following features are supported:
 * None-blocking request
 
 
-[Samuel Chen](samuel.net@gmail.com)
+[Samuel Chen](mailto:samuel.net@gmail.com)
